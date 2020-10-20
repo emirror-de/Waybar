@@ -5,8 +5,13 @@
 #include <gdk/gdkwayland.h>
 #include <wayland-client.h>
 
+#include <optional>
+
 #include "bar.hpp"
 #include "config.hpp"
+#ifdef HAVE_SWAY
+#include "modules/sway/bar.hpp"
+#endif
 
 struct zwlr_layer_shell_v1;
 struct zwp_idle_inhibitor_v1;
@@ -52,6 +57,10 @@ class Client {
   Glib::RefPtr<Gtk::StyleContext> style_context_;
   Glib::RefPtr<Gtk::CssProvider>  css_provider_;
   std::list<struct waybar_output> outputs_;
+#ifdef HAVE_SWAY
+  using BarIpcClient = waybar::modules::sway::BarIpcClient;
+  std::optional<BarIpcClient> bar_ipc_client_;
+#endif
 };
 
 }  // namespace waybar
