@@ -86,7 +86,9 @@ void BarIpcClient::onConfigUpdate(const swaybar_config& config) {
 
 void BarIpcClient::onVisibilityUpdate(bool visible_by_modifier) {
   spdlog::trace("visiblity update: {}", visible_by_modifier);
-  // TODO: pass visibility to bars
+  for (auto& bar : client_.bars) {
+    bar->setVisible(visible_by_modifier);
+  }
 }
 
 }  // namespace waybar::modules::sway
