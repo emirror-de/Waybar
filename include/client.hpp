@@ -31,6 +31,7 @@ class Client {
 
  private:
   Client() = default;
+  const std::string        getStyle(const std::string &style);
   void                     bindInterfaces();
   void                     handleOutput(struct waybar_output &output);
   auto                     setupCss(const std::string &css_file) -> void;
