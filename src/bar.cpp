@@ -403,27 +403,6 @@ waybar::Bar::Bar(struct waybar_output* w_output, const Json::Value& w_config)
   window.get_style_context()->add_class(config["name"].asString());
   window.get_style_context()->add_class(config["position"].asString());
 
-  if (config["layer"] == "top") {
-    layer_ = bar_layer::TOP;
-  } else if (config["layer"] == "overlay") {
-    layer_ = bar_layer::OVERLAY;
-  }
-
-  if (config["exclusive"].isBool()) {
-    exclusive = config["exclusive"].asBool();
-  } else if (layer_ == bar_layer::OVERLAY) {
-    // swaybar defaults: overlay mode does not reserve an exclusive zone
-    exclusive = false;
-  }
-
-  bool passthrough = false;
-  if (config["passthrough"].isBool()) {
-    passthrough = config["passthrough"].asBool();
-  } else if (layer_ == bar_layer::OVERLAY) {
-    // swaybar defaults: overlay mode does not accept pointer events.
-    passthrough = true;
-  }
-
   auto position = config["position"].asString();
 
   if (position == "right" || position == "left") {
@@ -498,12 +477,38 @@ waybar::Bar::Bar(struct waybar_output* w_output, const Json::Value& w_config)
     surface_impl_ = std::make_unique<RawSurfaceImpl>(window, *output);
   }
 
-  surface_impl_->setLayer(layer_);
-  surface_impl_->setExclusiveZone(exclusive);
   surface_impl_->setMargins(margins_);
-  surface_impl_->setPassThrough(passthrough);
   surface_impl_->setPosition(position);
   surface_impl_->setSize(width, height);
+
+  if (auto mode = config["mode"]; mode.isString()) {
+    setMode(mode.asString());
+  } else {
+    if (config["layer"] == "top") {
+      layer_ = bar_layer::TOP;
+    } else if (config["layer"] == "overlay") {
+      layer_ = bar_layer::OVERLAY;
+    }
+
+    if (config["exclusive"].isBool()) {
+      exclusive = config["exclusive"].asBool();
+    } else if (layer_ == bar_layer::OVERLAY) {
+      // swaybar defaults: overlay mode does not reserve an exclusive zone
+      exclusive = false;
+    }
+
+    bool passthrough = false;
+    if (config["passthrough"].isBool()) {
+      passthrough = config["passthrough"].asBool();
+    } else if (layer_ == bar_layer::OVERLAY) {
+      // swaybar defaults: overlay mode does not accept pointer events.
+      passthrough = true;
+    }
+
+    surface_impl_->setLayer(layer_);
+    surface_impl_->setExclusiveZone(exclusive);
+    surface_impl_->setPassThrough(passthrough);
+  }
 
   window.signal_map_event().connect_notify(sigc::mem_fun(*this, &Bar::onMap));
 
@@ -521,16 +526,44 @@ waybar::Bar::Bar(struct waybar_output* w_output, const Json::Value& w_config)
   }
 }
 
+void waybar::Bar::setMode(const std::string& mode) {
+  bool passthrough = false;
+  visible = true;
+  exclusive = true;
+  layer_ = bar_layer::BOTTOM;
+
+  if (mode == "hide") {
+    exclusive = false;
+    layer_ = bar_layer::TOP;
+    visible = false;
+  } else if (mode == "invisible") {
+    visible = false;
+  } else if (mode == "overlay") {
+    exclusive = false;
+    layer_ = bar_layer::TOP;
+    passthrough = true;
+  }
+
+  surface_impl_->setLayer(layer_);
+  surface_impl_->setExclusiveZone(exclusive);
+  surface_impl_->setPassThrough(passthrough);
+  setVisible(visible);
+}
+
 void waybar::Bar::onMap(GdkEventAny*) {
   /*
    * Obtain a pointer to the custom layer surface for modules that require it (idle_inhibitor).
    */
   auto gdk_window = window.get_window()->gobj();
   surface = gdk_wayland_window_get_wl_surface(gdk_window);
+  setVisible(visible);
 }
 
 void waybar::Bar::setVisible(bool value) {
   visible = value;
+  if (!window.get_mapped()) {
+    return;
+  }
   if (!visible) {
     window.get_style_context()->add_class("hidden");
     window.set_opacity(0);

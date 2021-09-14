@@ -33,7 +33,7 @@ class BarIpcClient {
   void onConfigUpdate(const swaybar_config& config);
   void onVisibilityUpdate(bool visible_by_modifier);
 
-  const Client&     client_;
+  Client&           client_;
   const std::string bar_id_;
   util::JsonParser  parser_;
   Ipc               ipc_;

@@ -61,7 +61,7 @@ struct waybar::waybar_output &waybar::Client::getOutput(void *addr) {
 }
 
 std::vector<Json::Value> waybar::Client::getOutputConfigs(struct waybar_output &output) {
-  return config_.getOutputConfigs(output.name, output.identifier);
+  return config.getOutputConfigs(output.name, output.identifier);
 }
 
 void waybar::Client::handleOutputDone(void *data, struct zxdg_output_v1 * /*xdg_output*/) {
@@ -197,14 +197,14 @@ void waybar::Client::bindInterfaces() {
 int waybar::Client::main(int argc, char *argv[]) {
   bool        show_help = false;
   bool        show_version = false;
-  std::string config;
-  std::string style;
+  std::string config_path;
+  std::string style_path;
   std::string bar_id;
   std::string log_level;
   auto        cli = clara::detail::Help(show_help) |
              clara::detail::Opt(show_version)["-v"]["--version"]("Show version") |
-             clara::detail::Opt(config, "config")["-c"]["--config"]("Config path") |
-             clara::detail::Opt(style, "style")["-s"]["--style"]("Style path") |
+             clara::detail::Opt(config_path, "config")["-c"]["--config"]("Config path") |
+             clara::detail::Opt(style_path, "style")["-s"]["--style"]("Style path") |
              clara::detail::Opt(
                  log_level,
                  "trace|debug|info|warning|error|critical|off")["-l"]["--log-level"]("Log level") |
@@ -235,8 +235,8 @@ int waybar::Client::main(int argc, char *argv[]) {
     throw std::runtime_error("Bar need to run under Wayland");
   }
   wl_display = gdk_wayland_display_get_wl_display(gdk_display->gobj());
-  config_.load(config);
-  auto css_file = getStyle(style);
+  config.load(config_path);
+  auto css_file = getStyle(style_path);
   setupCss(css_file);
 #ifdef HAVE_SWAY
   // FIXME: temporary hack
@@ -255,6 +255,4 @@ int waybar::Client::main(int argc, char *argv[]) {
   return 0;
 }
 
-void waybar::Client::reset() {
-  gtk_app->quit();
-}
+void waybar::Client::reset() { gtk_app->quit(); }

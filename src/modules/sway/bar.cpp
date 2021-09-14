@@ -48,6 +48,16 @@ struct swaybar_config parseConfig(const Json::Value& payload) {
   return conf;
 }
 
+void updateConfig(Json::Value& dst, const swaybar_config& src) {
+  if (dst.isArray()) {
+    for (auto& obj : dst) {
+      obj["mode"] = src.mode;
+    }
+  } else {
+    dst["mode"] = src.mode;
+  }
+}
+
 void BarIpcClient::onInitialConfig(const struct Ipc::ipc_response& res) {
   try {
     auto payload = parser_.parse(res.payload);
@@ -81,7 +91,12 @@ void BarIpcClient::onIpcEvent(const struct Ipc::ipc_response& res) {
 
 void BarIpcClient::onConfigUpdate(const swaybar_config& config) {
   spdlog::info("config update: {} {} {}", config.id, config.mode, config.position);
-  // TODO: pass config to bars
+  // update config for future bar instances
+  updateConfig(client_.config.getConfig(), config);
+  // update existing bar instances
+  for (auto& bar : client_.bars) {
+    bar->setMode(config.mode);
+  }
 }
 
 void BarIpcClient::onVisibilityUpdate(bool visible_by_modifier) {
