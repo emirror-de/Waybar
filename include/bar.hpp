@@ -58,6 +58,7 @@ class Bar {
   Bar(const Bar &) = delete;
   ~Bar() = default;
 
+  void setMode(const std::string&);
   void setVisible(bool visible);
   void setHiddenClass(bool value);
   void moveToTopLayer();

@@ -149,6 +149,7 @@ src_files = files(
     'src/main.cpp',
     'src/bar.cpp',
     'src/client.cpp',
+    'src/config.cpp',
     'src/util/ustring_clen.cpp'
 )
 
@@ -176,6 +177,7 @@ endif
 add_project_arguments('-DHAVE_SWAY', language: 'cpp')
 src_files += [
     'src/modules/sway/ipc/client.cpp',
+    'src/modules/sway/bar.cpp',
     'src/modules/sway/mode.cpp',
     'src/modules/sway/language.cpp',
     'src/modules/sway/window.cpp',
@@ -358,6 +360,15 @@ if scdoc.found()
             install_dir: '@0@/man@1@'.format(mandir, section)
         )
     endforeach
+endif
+
+catch2 = dependency(
+    'catch2',
+    fallback: ['catch2', 'catch2_dep'],
+    required: get_option('tests'),
+)
+if catch2.found()
+    subdir('test')
 endif
 
 clangtidy = find_program('clang-tidy', required: false)
